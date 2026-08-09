@@ -35,4 +35,17 @@ ADMIN_ID = int(ADMIN_ID) if ADMIN_ID and ADMIN_ID.isdigit() else 0
 LOG_CHANNEL = int(LOG_CHANNEL) if LOG_CHANNEL else 0
 VERIFY_EXPIRE_HOURS = int(VERIFY_EXPIRE_HOURS) if VERIFY_EXPIRE_HOURS and VERIFY_EXPIRE_HOURS.isdigit() else 12
 
-FORCE_CHANNELS_LIST = [ch.strip() for ch in FORCE_CHANNELS.split(",") if ch.strip()]
+# Private aur Public dono tarah ke channels support karne ke liye strip karke list banana
+FORCE_CHANNELS_LIST = []
+for ch in FORCE_CHANNELS.split(","):
+    ch = ch.strip()
+    if ch:
+        # Agar channel ID numeric hai (private channel ke liye), toh integer mein convert karein
+        if ch.startswith("-100") or (ch.startswith("-") and ch[1:].isdigit()):
+            try:
+                FORCE_CHANNELS_LIST.append(int(ch))
+            except ValueError:
+                FORCE_CHANNELS_LIST.append(ch)
+        else:
+            FORCE_CHANNELS_LIST.append(ch)
+            

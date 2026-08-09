@@ -6,11 +6,23 @@ API_HASH = os.environ.get("API_HASH")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = os.environ.get("ADMIN_ID")
 LOG_CHANNEL = os.environ.get("LOG_CHANNEL")
-FORCE_CHANNELS = os.environ.get("FORCE_CHANNELS", "")
 VERIFY_EXPIRE_HOURS = os.environ.get("VERIFY_EXPIRE_HOURS")
 SHORTENER_URL = os.environ.get("SHORTENER_URL")
 SHORTENER_API = os.environ.get("SHORTENER_API")
 HOW_TO_VERIFY_LINK = os.environ.get("HOW_TO_VERIFY_LINK")
+
+# Public aur Private Force Channels ke liye alag variables (Agar khali ho ya 'false' ho toh disable rahenge)
+public_raw = os.environ.get("PUBLIC_FORCE_CHANNELS", "").strip()
+if public_raw.lower() in ["false", "none", "off", ""]:
+    PUBLIC_CHANNELS = []
+else:
+    PUBLIC_CHANNELS = [ch.strip() for ch in public_raw.split(",") if ch.strip()]
+
+private_raw = os.environ.get("PRIVATE_FORCE_CHANNELS", "").strip()
+if private_raw.lower() in ["false", "none", "off", ""]:
+    PRIVATE_CHANNELS = []
+else:
+    PRIVATE_CHANNELS = [ch.strip() for ch in private_raw.split(",") if ch.strip()]
 
 # Check which keys are missing or unconfigured
 missing_keys = []
@@ -35,17 +47,3 @@ ADMIN_ID = int(ADMIN_ID) if ADMIN_ID and ADMIN_ID.isdigit() else 0
 LOG_CHANNEL = int(LOG_CHANNEL) if LOG_CHANNEL else 0
 VERIFY_EXPIRE_HOURS = int(VERIFY_EXPIRE_HOURS) if VERIFY_EXPIRE_HOURS and VERIFY_EXPIRE_HOURS.isdigit() else 12
 
-# Private aur Public dono tarah ke channels support karne ke liye strip karke list banana
-FORCE_CHANNELS_LIST = []
-for ch in FORCE_CHANNELS.split(","):
-    ch = ch.strip()
-    if ch:
-        # Agar channel ID numeric hai (private channel ke liye), toh integer mein convert karein
-        if ch.startswith("-100") or (ch.startswith("-") and ch[1:].isdigit()):
-            try:
-                FORCE_CHANNELS_LIST.append(int(ch))
-            except ValueError:
-                FORCE_CHANNELS_LIST.append(ch)
-        else:
-            FORCE_CHANNELS_LIST.append(ch)
-            

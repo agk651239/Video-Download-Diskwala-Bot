@@ -45,9 +45,9 @@ async def start_handler(client: Client, message: Message):
     await add_user(user_id)
     
     welcome_text = (
-        "👋 Welcome! / Namaste!\n\n"
+        "👋 **स्वागत है! / Welcome!**\n\n"
         "Send me any Diskwala or supported file link to download videos and photos seamlessly (Up to 100+ items).\n"
-        "Mujhe koi bhi Diskwala link bhejiye, main videos aur photos download kar dunga."
+        "मुझे कोई भी डिस्कवाला या समर्थित फ़ाइल लिंक भेजें, मैं वीडियो और फ़ोटो आसानी से डाउनलोड कर दूंगा।"
     )
     await message.reply_text(welcome_text)
 
@@ -57,19 +57,19 @@ async def help_handler(client: Client, message: Message):
     user = await get_user(user_id)
     
     if user and user.get("is_blocked"):
-        return await message.reply_text("❌ You are blocked from using support. / Aapko support use karne se block kiya gaya hai.")
+        return await message.reply_text("❌ आपको सहायता उपयोग करने से ब्लॉक कर दिया गया है। / You are blocked from using support.")
     
     await set_help_state(user_id, True)
     active_chats[user_id] = ADMIN_ID
     
     help_msg = (
-        "🛠️ **Support System / Sahayta Kendra**\n\n"
+        "🛠️ **सहायता केंद्र / Support System**\n\n"
         "Please describe your problem below. Your message has been forwarded to the admin.\n"
-        "Kripya apni samasya yahan likhein. Admin ko message bhej diya gaya hai."
+        "कृपया अपनी समस्या नीचे लिखें। आपका संदेश एडमिन को भेज दिया गया है।"
     )
     await message.reply_text(help_msg)
     
-    forward_text = f"🚨 **New Help Request**\nUser ID: `{user_id}`\nUsername: @{message.from_user.username or 'None'}"
+    forward_text = f"🚨 **नया सहायता अनुरोध / New Help Request**\nयूज़र आईडी / User ID: `{user_id}`\nयूज़रनेम / Username: @{message.from_user.username or 'None'}"
     if ADMIN_ID:
         try:
             await client.send_message(ADMIN_ID, forward_text)
@@ -89,7 +89,7 @@ async def help_handler(client: Client, message: Message):
             del active_chats[user_id]
             await set_help_state(user_id, False)
             try:
-                await client.send_message(user_id, "⏳ Your help session has expired due to inactivity. Use /help again if needed.")
+                await client.send_message(user_id, "⏳ निष्क्रियता के कारण आपका सहायता सत्र समाप्त हो गया है। / Your help session has expired due to inactivity. Use /help again if needed.")
             except Exception:
                 pass
             
@@ -105,18 +105,18 @@ async def problem_solved_handler(client: Client, message: Message):
     if target_user:
         del active_chats[target_user]
         await set_help_state(target_user, False)
-        await client.send_message(target_user, "✅ Your issue has been marked as resolved by the admin. /start to continue.")
-        await message.reply_text(f"Session closed for user `{target_user}`.")
+        await client.send_message(target_user, "✅ एडमिन द्वारा आपकी समस्या का समाधान कर दिया गया है। / Your issue has been marked as resolved by the admin. /start to continue.")
+        await message.reply_text(f"यूज़र `{target_user}` के लिए सत्र बंद कर दिया गया है। / Session closed for user `{target_user}`.")
     else:
-        await message.reply_text("No active help session found.")
+        await message.reply_text("कोई सक्रिय सहायता सत्र नहीं मिला। / No active help session found.")
 
 @app.on_message(filters.command("block") & filters.user(ADMIN_ID))
 async def block_user_handler(client: Client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("Usage: `/block <user_id>`")
+        return await message.reply_text("उपयोग / Usage: `/block <user_id>`")
     target_id = int(message.command[1])
     await set_block_status(target_id, True)
-    await message.reply_text(f"🚫 User `{target_id}` has been blocked.")
+    await message.reply_text(f"🚫 यूज़र `{target_id}` को ब्लॉक कर दिया गया है। / User `{target_id}` has been blocked.")
 
 @app.on_message(filters.command("stats") & filters.user(ADMIN_ID))
 async def stats_handler(client: Client, message: Message):
@@ -129,12 +129,12 @@ async def stats_handler(client: Client, message: Message):
     bot_username = f"@{bot_info.username}" if bot_info.username else "No Username"
     
     stats_text = (
-        f"📊 **Bot Statistics & Delay Report / Dainik Report**\n\n"
-        f"🤖 **Bot Name:** `{bot_name}`\n"
-        f"🔗 **Bot Username:** `{bot_username}`\n\n"
-        f"• Total Users / Kul Users: `{total}`\n"
-        f"• Monthly Active Users / Mahine ke Active Users: `{monthly}`\n"
-        f"• Status: All Systems Operational 🟢"
+        f"📊 **बोट सांख्यिकी रिपोर्ट / Bot Statistics Report**\n\n"
+        f"🤖 **बोट का नाम / Bot Name:** `{bot_name}`\n"
+        f"🔗 **बोट यूज़रनेम / Bot Username:** `{bot_username}`\n\n"
+        f"• कुल यूज़र / Total Users: `{total}`\n"
+        f"• मासिक सक्रिय यूज़र / Monthly Active Users: `{monthly}`\n"
+        f"• स्थिति / Status: सभी प्रणालियाँ कार्यरत हैं / All Systems Operational 🟢"
     )
     await message.reply_text(stats_text)
     
@@ -164,7 +164,7 @@ async def media_link_handler(client: Client, message: Message):
         
     url = message.text.strip()
     if not url.startswith("http"):
-        return await message.reply_text("❌ Please send a valid link! / Kripya ek valid link bhejiye.")
+        return await message.reply_text("❌ कृपया एक वैध लिंक भेजें! / Please send a valid link!")
 
     # 1. Public Force Channels Check (Admin ke liye bypass, agar khali ho ya false ho toh skip)
     if PUBLIC_CHANNELS and not is_admin:
@@ -177,12 +177,13 @@ async def media_link_handler(client: Client, message: Message):
                 clean_channel = channel.replace("@", "").strip()
                 channel_link = f"https://t.me/{clean_channel}"
                 join_buttons = [
-                    [InlineKeyboardButton("📢 Join Public Channel", url=channel_link)],
-                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
+                    [InlineKeyboardButton("📢 पब्लिक चैनल ज्वाइन करें / Join Public Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 दोबारा जाँच करें / Try Again", callback_data="check_join")]
                 ]
                 return await message.reply_text(
-                    "⚠️ **Force Join Required!**\nPlease join our public update channel to use the bot.\n\n"
-                    "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
+                    "⚠️ **चैनल ज्वाइन करना अनिवार्य है! / Force Join Required!**\n\n"
+                    "बोट का उपयोग करने के लिए कृपया हमारे पब्लिक चैनल को ज्वाइन करें।\nPlease join our public update channel to use the bot.\n\n"
+                    "*नोट / Note:* यदि आप पहले से जुड़े हैं और त्रुटि आ रही है, तो चैनल छोड़कर दोबारा ज्वाइन करें।",
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
@@ -195,12 +196,13 @@ async def media_link_handler(client: Client, message: Message):
             if "t.me/" in str(channel) or "+" in str(channel):
                 channel_link = channel if channel.startswith("http") else f"https://t.me/{channel}"
                 join_buttons = [
-                    [InlineKeyboardButton("🔒 Join Private Channel", url=channel_link)],
-                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
+                    [InlineKeyboardButton("🔒 प्राइवेट चैनल ज्वाइन करें / Join Private Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 दोबारा जाँच करें / Try Again", callback_data="check_join")]
                 ]
                 return await message.reply_text(
-                    "⚠️ **Force Join Required!**\nPlease join our private update channel to use the bot.\n\n"
-                    "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
+                    "⚠️ **चैनल ज्वाइन करना अनिवार्य है! / Force Join Required!**\n\n"
+                    "बोट का उपयोग करने के लिए कृपया हमारे प्राइवेट चैनल को ज्वाइन करें।\nPlease join our private update channel to use the bot.\n\n"
+                    "*नोट / Note:* यदि आप पहले से जुड़े हैं और त्रुटि आ रही है, तो चैनल छोड़कर दोबारा ज्वाइन करें।",
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
@@ -218,12 +220,13 @@ async def media_link_handler(client: Client, message: Message):
                     channel_link = "https://t.me"
 
                 join_buttons = [
-                    [InlineKeyboardButton("🔒 Join Private Channel", url=channel_link)],
-                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
+                    [InlineKeyboardButton("🔒 प्राइवेट चैनल ज्वाइन करें / Join Private Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 दोबारा जाँच करें / Try Again", callback_data="check_join")]
                 ]
                 return await message.reply_text(
-                    "⚠️ **Force Join Required!**\nPlease join our private update channel to use the bot.\n\n"
-                    "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
+                    "⚠️ **चैनल ज्वाइन करना अनिवार्य है! / Force Join Required!**\n\n"
+                    "बोट का उपयोग करने के लिए कृपया हमारे प्राइवेट चैनल को ज्वाइन करें।\nPlease join our private update channel to use the bot.\n\n"
+                    "*नोट / Note:* यदि आप पहले से जुड़े हैं और त्रुटि आ रही है, तो चैनल छोड़कर दोबारा ज्वाइन करें।",
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
@@ -235,18 +238,18 @@ async def media_link_handler(client: Client, message: Message):
         
         if (current_time - verified_time) > expire_limit:
             verify_msg = (
-                f"🔐 **Verification Required / Verification Zaroori Hai**\n\n"
+                f"🔐 **वेरिफ़िकेशन आवश्यक है / Verification Required**\n\n"
                 f"Verify once to get unlimited Videos download for the next {VERIFY_EXPIRE_HOURS} hours.\n"
-                f"Agle {VERIFY_EXPIRE_HOURS} ghante tak unlimited videos download karne ke liye verify karein."
+                f"अगले {VERIFY_EXPIRE_HOURS} घंटों के लिए असीमित वीडियो डाउनलोड करने हेतु एक बार वेरिफ़ाई करें।"
             )
             v_buttons = [
-                [InlineKeyboardButton("🔗 Verify Now", url=SHORTENER_URL or "https://t.me")],
-                [InlineKeyboardButton("❓ How to Verify", url=HOW_TO_VERIFY_LINK or "https://t.me")]
+                [InlineKeyboardButton("🔗 अभी वेरिफ़ाई करें / Verify Now", url=SHORTENER_URL or "https://t.me")],
+                [InlineKeyboardButton("❓ वेरिफ़ाई कैसे करें? / How to Verify", url=HOW_TO_VERIFY_LINK or "https://t.me")]
             ]
             return await message.reply_text(verify_msg, reply_markup=InlineKeyboardMarkup(v_buttons))
 
     # Dynamic Progress Status & Bulk Download Processing
-    status_msg = await message.reply_text("⏳ **Total videos number + downloading...**")
+    status_msg = await message.reply_text("⏳ **कुल वीडियो गिने जा रहे हैं + डाउनलोड हो रहे हैं... / Total videos number + downloading...**")
     
     result = await fetch_media_from_link(url)
     
@@ -256,7 +259,7 @@ async def media_link_handler(client: Client, message: Message):
         pass
         
     if not result.get("success"):
-        return await message.reply_text("❌ Failed to fetch media or link is invalid. / Media fetch karne mein asafalta.")
+        return await message.reply_text("❌ मीडिया फ़ेच करने में विफलता या लिंक अमान्य है। / Failed to fetch media or link is invalid.")
 
     media_list = result.get("media_list", [])
     total_found = result.get("total_found", len(media_list))
@@ -269,7 +272,7 @@ async def media_link_handler(client: Client, message: Message):
             pass
 
     if downloaded_count < total_found:
-        await message.reply_text(f"⚠️ **({downloaded_count}/{total_found})** - Partial download completed. Kuch files download nahi ho saki.")
+        await message.reply_text(f"⚠️ **({downloaded_count}/{total_found})** - आंशिक डाउनलोड पूर्ण हुआ। कुछ फ़ाइलें डाउनलोड नहीं हो सकीं। / Partial download completed.")
 
 async def send_missing_keys_alert():
     if missing_keys and ADMIN_ID:
@@ -277,10 +280,9 @@ async def send_missing_keys_alert():
             await app.start()
             keys_str = ", ".join(missing_keys)
             alert_text = (
-                f"⚠️ **Configuration Warning / Missing Keys Alert**\n\n"
-                f"Following environment variables are missing or unconfigured in Render:\n"
-                f"`{keys_str}`\n\n"
-                f"Bot is running smoothly using fallback values, but please configure them for full features."
+                f"⚠️ **कॉन्फ़िगरेशन चेतावनी / Missing Keys Alert**\n\n"
+                f"रेंडर में निम्नलिखित पर्यावरण चर गायब या अनकॉफ़िगर हैं:\nFollowing environment variables are missing in Render:\n"
+                f"`{keys_str}`"
             )
             await app.send_message(ADMIN_ID, alert_text)
             await app.stop()

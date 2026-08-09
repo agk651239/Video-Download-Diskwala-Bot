@@ -1,2 +1,2 @@
-# Video-Download-Diskwala-Bot
-Diskwala Videoes download Bot
+# Video-Downloader-Diskwala-Bot
+Diskwala Videoes downloader Bot

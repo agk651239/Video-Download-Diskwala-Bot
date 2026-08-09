@@ -8,16 +8,14 @@ async def fetch_media_from_link(url: str) -> dict:
     """
     try:
         async with aiohttp.ClientSession() as session:
-            # Yahan aapki site ki API ya scraping request aayegi
+            # Aap yahan apni API/Scraping request implement kar sakte hain
             pass
         
-        # Mock response: 
-        # 'media_list' mein sabhi videos/photos ke URLs ya file paths honge
+        # Mock structured response for 100+ items capacity testing
         return {
             "success": True,
             "media_list": [
-                # {"type": "video", "url": "..."},
-                # {"type": "photo", "url": "..."}
+                # Example structure: {"type": "video", "url": "..."}
             ],
             "total_found": 0
         }
@@ -29,4 +27,4 @@ async def fetch_media_from_link(url: str) -> dict:
             "media_list": [],
             "total_found": 0
         }
-      
+        

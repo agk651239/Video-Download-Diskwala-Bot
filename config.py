@@ -10,6 +10,8 @@ VERIFY_EXPIRE_HOURS = os.environ.get("VERIFY_EXPIRE_HOURS")
 SHORTENER_URL = os.environ.get("SHORTENER_URL")
 SHORTENER_API = os.environ.get("SHORTENER_API")
 HOW_TO_VERIFY_LINK = os.environ.get("HOW_TO_VERIFY_LINK")
+DISKWALA_PROXY_URL = os.environ.get("DISKWALA_PROXY_URL")
+DISKWALA_API_KEY = os.environ.get("DISKWALA_API_KEY")
 
 # Public aur Private Force Channels ke liye alag variables (Agar khali ho ya 'false' ho toh disable rahenge)
 public_raw = os.environ.get("PUBLIC_FORCE_CHANNELS", "").strip()
@@ -35,6 +37,8 @@ config_dict = {
     "VERIFY_EXPIRE_HOURS": VERIFY_EXPIRE_HOURS,
     "SHORTENER_URL": SHORTENER_URL,
     "SHORTENER_API": SHORTENER_API
+    "DISKWALA_PROXY_URL": DISKWALA_PROXY_URL,
+    "DISKWALA_API_KEY": DISKWALA_API_KEY   
 }
 
 for key, value in config_dict.items():

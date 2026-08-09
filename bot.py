@@ -110,13 +110,26 @@ async def stats_handler(client: Client, message: Message):
     start_of_month = time.time() - (30 * 86400)
     monthly = await get_monthly_users(start_of_month)
     
+    bot_info = await client.get_me()
+    bot_name = bot_info.first_name
+    bot_username = f"@{bot_info.username}" if bot_info.username else "No Username"
+    
     stats_text = (
-        f"📊 **Bot Statistics Report / Dainik Report**\n\n"
+        f"📊 **Bot Statistics & Delay Report / Dainik Report**\n\n"
+        f"🤖 **Bot Name:** `{bot_name}`\n"
+        f"🔗 **Bot Username:** `{bot_username}`\n\n"
         f"• Total Users / Kul Users: `{total}`\n"
         f"• Monthly Active Users / Mahine ke Active Users: `{monthly}`\n"
         f"• Status: All Systems Operational 🟢"
     )
     await message.reply_text(stats_text)
+    
+    # Log channel mein bhi Bot Name/Username ke sath report bhejne ke liye
+    if LOG_CHANNEL:
+        try:
+            await client.send_message(LOG_CHANNEL, stats_text)
+        except Exception:
+            pass
 
 @app.on_message(filters.private & ~filters.command(["start", "help", "problem_solved", "block", "stats"]))
 async def media_link_handler(client: Client, message: Message):
@@ -138,7 +151,7 @@ async def media_link_handler(client: Client, message: Message):
     if not url.startswith("http"):
         return await message.reply_text("❌ Please send a valid link! / Kripya ek valid link bhejiye.")
 
-    # 1. Force Join Verification Check
+    # 1. Force Join Verification Check (Supports both Public & Private Channels via ID/Username)
     if FORCE_CHANNELS_LIST:
         for channel in FORCE_CHANNELS_LIST:
             try:
@@ -146,8 +159,10 @@ async def media_link_handler(client: Client, message: Message):
                 if member.status in ["left", "kicked"]:
                     raise Exception("Not joined")
             except Exception:
+                # Agar channel username hai toh invite link banayein, warna direct text dikhayein
+                channel_link = f"https://t.me/{channel.replace('@', '')}" if isinstance(channel, str) and not channel.startswith("-") else "https://t.me"
                 join_buttons = [
-                    [InlineKeyboardButton("📢 Join Channel", url=f"https://t.me/{channel.replace('@', '')}")],
+                    [InlineKeyboardButton("📢 Join Channel", url=channel_link)],
                     [InlineKeyboardButton("🔄 Try Again / Dubara Check Karein", callback_data="check_join")]
                 ]
                 return await message.reply_text(

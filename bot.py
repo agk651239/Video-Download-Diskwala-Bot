@@ -44,6 +44,15 @@ async def start_handler(client: Client, message: Message):
     user_id = message.from_user.id
     await add_user(user_id)
     
+    # Shortener verification return check (?start=verified)
+    if len(message.command) > 1 and message.command[1] == "verified":
+        await update_verified_time(user_id, time.time())
+        return await message.reply_text(
+            "✅ **वेरिफ़िकेशन सफल रहा! / Verification Successful!**\n\n"
+            f"अब आप अगले {VERIFY_EXPIRE_HOURS} घंटों के लिए असीमित वीडियो डाउनलोड कर सकते हैं।\n"
+            "Now you can download videos seamlessly. Send your link again!"
+        )
+
     welcome_text = (
         "👋 **स्वागत है! / Welcome!**\n\n"
         "Send me any Diskwala or supported file link to download videos and photos seamlessly (Up to 100+ items).\n"

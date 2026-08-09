@@ -46,4 +46,3 @@ API_ID = int(API_ID) if API_ID and API_ID.isdigit() else 0
 ADMIN_ID = int(ADMIN_ID) if ADMIN_ID and ADMIN_ID.isdigit() else 0
 LOG_CHANNEL = int(LOG_CHANNEL) if LOG_CHANNEL else 0
 VERIFY_EXPIRE_HOURS = int(VERIFY_EXPIRE_HOURS) if VERIFY_EXPIRE_HOURS and VERIFY_EXPIRE_HOURS.isdigit() else 12
-

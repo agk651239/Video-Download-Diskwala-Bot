@@ -4,7 +4,7 @@ import logging
 import time
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from apscheduler.schedulers.asyncio import AsyncScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import (
     API_ID, API_HASH, BOT_TOKEN, ADMIN_ID, LOG_CHANNEL, 

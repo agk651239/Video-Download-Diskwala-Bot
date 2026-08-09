@@ -301,16 +301,34 @@ async def media_link_handler(client: Client, message: Message):
 
     media_list = result.get("media_list", [])
     total_found = result.get("total_found", len(media_list))
+    
+    if not media_list:
+        return await message.reply_text("❌ इस लिंक में कोई मीडिया नहीं मिला। / No media found in this link.")
+
     downloaded_count = 0
     
     for media in media_list:
         try:
-            downloaded_count += 1
-        except Exception:
+            media_url = media.get("url") or media.get("file_url")
+            caption = media.get("caption", "Here is your video / photo!")
+            
+            if media_url:
+                if media.get("type") == "photo" or media_url.endswith((".jpg", ".png", ".jpeg")):
+                    await client.send_photo(chat_id=user_id, photo=media_url, caption=caption)
+                else:
+                    await client.send_video(chat_id=user_id, video=media_url, caption=caption)
+                downloaded_count += 1
+                await asyncio.sleep(1)
+        except Exception as e:
+            print(f"Error sending media: {e}")
             pass
 
-    if downloaded_count < total_found:
-        await message.reply_text(f"⚠️ **({downloaded_count}/{total_found})** - आंशिक डाउनलोड पूर्ण हुआ। कुछ फ़ाइलें डाउनलोड नहीं हो सकीं। / Partial download completed.")
+    if downloaded_count == 0:
+        await message.reply_text("❌ वीडियो भेजने में विफल रहा। / Failed to send media.")
+    elif downloaded_count < total_found:
+        await message.reply_text(f"⚠️ **({downloaded_count}/{total_found})** - आंशिक डाउनलोड पूर्ण हुआ। कुछ फ़ाइलें नहीं भेजी जा सकीं। / Partial download completed.")
+    else:
+        await message.reply_text(f"✅ **सभी {downloaded_count} फ़ाइलें सफलतापूर्वक भेज दी गई हैं! / All files sent successfully!**")
 
 async def send_missing_keys_alert():
     if missing_keys and ADMIN_ID:

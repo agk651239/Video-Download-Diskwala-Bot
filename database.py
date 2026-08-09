@@ -1,6 +1,7 @@
 import os
 import time
 from motor.motor_asyncio import AsyncIOMotorClient
+from config import API_ID
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "TelegramBotDB")
@@ -9,7 +10,6 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
 users_collection = db["users"]
-chats_collection = db["chats"]
 
 async def add_user(user_id: int):
     exists = await users_collection.find_one({"user_id": user_id})
@@ -39,4 +39,4 @@ async def get_total_users():
 
 async def get_monthly_users(start_timestamp: float):
     return await users_collection.count_documents({"joined_date": {"$gte": start_timestamp}})
-  
+    

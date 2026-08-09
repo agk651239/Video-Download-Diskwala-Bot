@@ -186,22 +186,36 @@ async def media_link_handler(client: Client, message: Message):
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
-    # 2. Private Force Channels Check (Admin ke liye bypass, agar khali ho ya false ho toh skip)
+    # 2. Private Force Channels Check (Admin ke liye bypass, ID ya direct URL support)
     if PRIVATE_CHANNELS and not is_admin:
         for channel in PRIVATE_CHANNELS:
+            channel_link = "https://t.me"
+            
+            # Agar direct invite link diya gaya hai
+            if "t.me/" in str(channel) or "+" in str(channel):
+                channel_link = channel if channel.startswith("http") else f"https://t.me/{channel}"
+                join_buttons = [
+                    [InlineKeyboardButton("🔒 Join Private Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
+                ]
+                return await message.reply_text(
+                    "⚠️ **Force Join Required!**\nPlease join our private update channel to use the bot.\n\n"
+                    "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
+                    reply_markup=InlineKeyboardMarkup(join_buttons)
+                )
+
             try:
                 ch_id = int(channel) if channel.startswith("-") or channel.isdigit() else channel
                 member = await client.get_chat_member(ch_id, user_id)
                 if member.status in ["left", "kicked"]:
                     raise Exception("Not joined")
             except Exception:
-                channel_link = "https://t.me"
                 try:
                     ch_id = int(channel) if channel.startswith("-") or channel.isdigit() else channel
                     chat = await client.get_chat(ch_id)
                     channel_link = chat.invite_link or (f"https://t.me/{chat.username}" if chat.username else "https://t.me")
                 except Exception:
-                    pass
+                    channel_link = "https://t.me"
 
                 join_buttons = [
                     [InlineKeyboardButton("🔒 Join Private Channel", url=channel_link)],
@@ -280,4 +294,4 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(start_web_server())
     app.run()
-        
+    

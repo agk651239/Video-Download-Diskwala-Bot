@@ -9,8 +9,8 @@ from aiohttp import web
 
 from config import (
     API_ID, API_HASH, BOT_TOKEN, ADMIN_ID, LOG_CHANNEL, 
-    FORCE_CHANNELS_LIST, VERIFY_EXPIRE_HOURS, SHORTENER_URL, 
-    HOW_TO_VERIFY_LINK, missing_keys
+    PUBLIC_CHANNELS, PRIVATE_CHANNELS, VERIFY_EXPIRE_HOURS, 
+    SHORTENER_URL, HOW_TO_VERIFY_LINK, missing_keys
 )
 from database import (
     add_user, get_user, update_verified_time, 
@@ -147,6 +147,8 @@ async def stats_handler(client: Client, message: Message):
 @app.on_message(filters.private & ~filters.command(["start", "help", "problem_solved", "block", "stats"]))
 async def media_link_handler(client: Client, message: Message):
     user_id = message.from_user.id
+    is_admin = (user_id == ADMIN_ID)
+    
     user = await get_user(user_id)
     
     if user and user.get("is_blocked"):
@@ -164,41 +166,70 @@ async def media_link_handler(client: Client, message: Message):
     if not url.startswith("http"):
         return await message.reply_text("❌ Please send a valid link! / Kripya ek valid link bhejiye.")
 
-    # Force Join Verification Check (Public & Private Channels Support)
-    if FORCE_CHANNELS_LIST:
-        for channel in FORCE_CHANNELS_LIST:
+    # 1. Public Force Channels Check (Admin ke liye bypass, agar khali ho ya false ho toh skip)
+    if PUBLIC_CHANNELS and not is_admin:
+        for channel in PUBLIC_CHANNELS:
             try:
                 member = await client.get_chat_member(channel, user_id)
                 if member.status in ["left", "kicked"]:
                     raise Exception("Not joined")
             except Exception:
-                channel_link = f"https://t.me/{channel.replace('@', '')}" if isinstance(channel, str) and not str(channel).startswith("-") else "https://t.me"
+                clean_channel = channel.replace("@", "").strip()
+                channel_link = f"https://t.me/{clean_channel}"
                 join_buttons = [
-                    [InlineKeyboardButton("📢 Join Channel", url=channel_link)],
-                    [InlineKeyboardButton("🔄 Try Again / Dubara Check Karein", callback_data="check_join")]
+                    [InlineKeyboardButton("📢 Join Public Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
                 ]
                 return await message.reply_text(
-                    "⚠️ **Force Join Required!**\nPlease join our update channels to use the bot.\n\n"
+                    "⚠️ **Force Join Required!**\nPlease join our public update channel to use the bot.\n\n"
                     "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
-    # Verification Status Check
-    current_time = time.time()
-    verified_time = user.get("verified_time", 0) if user else 0
-    expire_limit = VERIFY_EXPIRE_HOURS * 3600
-    
-    if (current_time - verified_time) > expire_limit:
-        verify_msg = (
-            f"🔐 **Verification Required / Verification Zaroori Hai**\n\n"
-            f"Verify once to get unlimited Videos download for the next {VERIFY_EXPIRE_HOURS} hours.\n"
-            f"Agle {VERIFY_EXPIRE_HOURS} ghante tak unlimited videos download karne ke liye verify karein."
-        )
-        v_buttons = [
-            [InlineKeyboardButton("🔗 Verify Now", url=SHORTENER_URL or "https://t.me")],
-            [InlineKeyboardButton("❓ How to Verify", url=HOW_TO_VERIFY_LINK or "https://t.me")]
-        ]
-        return await message.reply_text(verify_msg, reply_markup=InlineKeyboardMarkup(v_buttons))
+    # 2. Private Force Channels Check (Admin ke liye bypass, agar khali ho ya false ho toh skip)
+    if PRIVATE_CHANNELS and not is_admin:
+        for channel in PRIVATE_CHANNELS:
+            try:
+                ch_id = int(channel) if channel.startswith("-") or channel.isdigit() else channel
+                member = await client.get_chat_member(ch_id, user_id)
+                if member.status in ["left", "kicked"]:
+                    raise Exception("Not joined")
+            except Exception:
+                channel_link = "https://t.me"
+                try:
+                    ch_id = int(channel) if channel.startswith("-") or channel.isdigit() else channel
+                    chat = await client.get_chat(ch_id)
+                    channel_link = chat.invite_link or (f"https://t.me/{chat.username}" if chat.username else "https://t.me")
+                except Exception:
+                    pass
+
+                join_buttons = [
+                    [InlineKeyboardButton("🔒 Join Private Channel", url=channel_link)],
+                    [InlineKeyboardButton("🔄 Try Again / Dubara Check", callback_data="check_join")]
+                ]
+                return await message.reply_text(
+                    "⚠️ **Force Join Required!**\nPlease join our private update channel to use the bot.\n\n"
+                    "*Note:* Agar aap pehle se joined hain par error aa raha hai, toh channel leave karke dubara join karein.",
+                    reply_markup=InlineKeyboardMarkup(join_buttons)
+                )
+
+    # Verification Status Check (Admin ke liye bypass)
+    if not is_admin:
+        current_time = time.time()
+        verified_time = user.get("verified_time", 0) if user else 0
+        expire_limit = VERIFY_EXPIRE_HOURS * 3600
+        
+        if (current_time - verified_time) > expire_limit:
+            verify_msg = (
+                f"🔐 **Verification Required / Verification Zaroori Hai**\n\n"
+                f"Verify once to get unlimited Videos download for the next {VERIFY_EXPIRE_HOURS} hours.\n"
+                f"Agle {VERIFY_EXPIRE_HOURS} ghante tak unlimited videos download karne ke liye verify karein."
+            )
+            v_buttons = [
+                [InlineKeyboardButton("🔗 Verify Now", url=SHORTENER_URL or "https://t.me")],
+                [InlineKeyboardButton("❓ How to Verify", url=HOW_TO_VERIFY_LINK or "https://t.me")]
+            ]
+            return await message.reply_text(verify_msg, reply_markup=InlineKeyboardMarkup(v_buttons))
 
     # Dynamic Progress Status & Bulk Download Processing
     status_msg = await message.reply_text("⏳ **Total videos number + downloading...**")

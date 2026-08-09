@@ -237,14 +237,41 @@ async def media_link_handler(client: Client, message: Message):
         expire_limit = VERIFY_EXPIRE_HOURS * 3600
         
         if (current_time - verified_time) > expire_limit:
+            import aiohttp
+            
+            # Default fallback link agar shortener configure na ho
+            final_verify_url = SHORTENER_URL or "https://t.me"
+            
+            # Shortener URL aur API ko match karke link generate karna
+            if SHORTENER_URL and "SHORTENER_API" in globals() and SHORTENER_API:
+                try:
+                    bot_info = await client.get_me()
+                    callback_target_url = f"https://t.me/{bot_info.username}?start=verified"
+                    
+                    base_url = SHORTENER_URL.rstrip('/')
+                    api_endpoint = f"{base_url}/api?api={SHORTENER_API}&url={callback_target_url}"
+                    
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(api_endpoint, timeout=10) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                if isinstance(data, dict):
+                                    shortened = data.get("shortenedUrl") or data.get("url") or data.get("short_url")
+                                    if shortened:
+                                        final_verify_url = shortened
+                except Exception:
+                    pass
+
+            target_how_to_url = HOW_TO_VERIFY_LINK if HOW_TO_VERIFY_LINK and HOW_TO_VERIFY_LINK.startswith("http") else "https://t.me"
+
             verify_msg = (
                 f"🔐 **वेरिफ़िकेशन आवश्यक है / Verification Required**\n\n"
                 f"Verify once to get unlimited Videos download for the next {VERIFY_EXPIRE_HOURS} hours.\n"
                 f"अगले {VERIFY_EXPIRE_HOURS} घंटों के लिए असीमित वीडियो डाउनलोड करने हेतु एक बार वेरिफ़ाई करें।"
             )
             v_buttons = [
-                [InlineKeyboardButton("🔗 अभी वेरिफ़ाई करें / Verify Now", url=SHORTENER_URL or "https://t.me")],
-                [InlineKeyboardButton("❓ वेरिफ़ाई कैसे करें? / How to Verify", url=HOW_TO_VERIFY_LINK or "https://t.me")]
+                [InlineKeyboardButton("🔗 अभी वेरिफ़ाई करें / Verify Now", url=final_verify_url)],
+                [InlineKeyboardButton("❓ वेरिफ़ाई कैसे करें? / How to Verify", url=target_how_to_url)]
             ]
             return await message.reply_text(verify_msg, reply_markup=InlineKeyboardMarkup(v_buttons))
 
@@ -296,4 +323,4 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(start_web_server())
     app.run()
-    
+                

@@ -10,7 +10,7 @@ from aiohttp import web
 from config import (
     API_ID, API_HASH, BOT_TOKEN, ADMIN_ID, LOG_CHANNEL, 
     PUBLIC_CHANNELS, PRIVATE_CHANNELS, VERIFY_EXPIRE_HOURS, 
-    SHORTENER_URL, HOW_TO_VERIFY_LINK, missing_keys
+    SHORTENER_URL, SHORTENER_API, HOW_TO_VERIFY_LINK, missing_keys
 )
 from database import (
     add_user, get_user, update_verified_time, 
@@ -238,18 +238,20 @@ async def media_link_handler(client: Client, message: Message):
         
         if (current_time - verified_time) > expire_limit:
             import aiohttp
+            import urllib.parse
             
             # Default fallback link agar shortener configure na ho
             final_verify_url = SHORTENER_URL or "https://t.me"
             
             # Shortener URL aur API ko match karke link generate karna
-            if SHORTENER_URL and "SHORTENER_API" in globals() and SHORTENER_API:
+            if SHORTENER_URL and SHORTENER_API:
                 try:
                     bot_info = await client.get_me()
                     callback_target_url = f"https://t.me/{bot_info.username}?start=verified"
                     
+                    encoded_target = urllib.parse.quote(callback_target_url, safe='')
                     base_url = SHORTENER_URL.rstrip('/')
-                    api_endpoint = f"{base_url}/api?api={SHORTENER_API}&url={callback_target_url}"
+                    api_endpoint = f"{base_url}/api?api={SHORTENER_API}&url={encoded_target}"
                     
                     async with aiohttp.ClientSession() as session:
                         async with session.get(api_endpoint, timeout=10) as resp:

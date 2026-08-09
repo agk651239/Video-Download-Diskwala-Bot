@@ -5,6 +5,7 @@ import time
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiohttp import web
 
 from config import (
     API_ID, API_HASH, BOT_TOKEN, ADMIN_ID, LOG_CHANNEL, 
@@ -24,6 +25,19 @@ logging.basicConfig(level=logging.INFO)
 app = Client("DiskwalaBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 active_chats = {} # user_id: admin_id
+
+# Render Web Service ke liye port 10000 par aiohttp server
+async def handle(request):
+    return web.Response(text="Bot is running successfully!")
+
+async def start_web_server():
+    app_web = web.Application()
+    app_web.add_routes([web.get("/", handle)])
+    runner = web.AppRunner(app_web)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
 
 @app.on_message(filters.command("start") & filters.private)
 async def start_handler(client: Client, message: Message):
@@ -124,7 +138,6 @@ async def stats_handler(client: Client, message: Message):
     )
     await message.reply_text(stats_text)
     
-    # Log channel mein bhi Bot Name/Username ke sath report bhejne ke liye
     if LOG_CHANNEL:
         try:
             await client.send_message(LOG_CHANNEL, stats_text)
@@ -151,7 +164,7 @@ async def media_link_handler(client: Client, message: Message):
     if not url.startswith("http"):
         return await message.reply_text("❌ Please send a valid link! / Kripya ek valid link bhejiye.")
 
-    # 1. Force Join Verification Check (Supports both Public & Private Channels via ID/Username)
+    # Force Join Verification Check (Public & Private Channels Support)
     if FORCE_CHANNELS_LIST:
         for channel in FORCE_CHANNELS_LIST:
             try:
@@ -159,8 +172,7 @@ async def media_link_handler(client: Client, message: Message):
                 if member.status in ["left", "kicked"]:
                     raise Exception("Not joined")
             except Exception:
-                # Agar channel username hai toh invite link banayein, warna direct text dikhayein
-                channel_link = f"https://t.me/{channel.replace('@', '')}" if isinstance(channel, str) and not channel.startswith("-") else "https://t.me"
+                channel_link = f"https://t.me/{channel.replace('@', '')}" if isinstance(channel, str) and not str(channel).startswith("-") else "https://t.me"
                 join_buttons = [
                     [InlineKeyboardButton("📢 Join Channel", url=channel_link)],
                     [InlineKeyboardButton("🔄 Try Again / Dubara Check Karein", callback_data="check_join")]
@@ -171,7 +183,7 @@ async def media_link_handler(client: Client, message: Message):
                     reply_markup=InlineKeyboardMarkup(join_buttons)
                 )
 
-    # 2. Verification Status Check (Bilingual Dynamic Prompt)
+    # Verification Status Check
     current_time = time.time()
     verified_time = user.get("verified_time", 0) if user else 0
     expire_limit = VERIFY_EXPIRE_HOURS * 3600
@@ -188,7 +200,7 @@ async def media_link_handler(client: Client, message: Message):
         ]
         return await message.reply_text(verify_msg, reply_markup=InlineKeyboardMarkup(v_buttons))
 
-    # 3. Dynamic Progress Status & Bulk Download Processing (100+ items support)
+    # Dynamic Progress Status & Bulk Download Processing
     status_msg = await message.reply_text("⏳ **Total videos number + downloading...**")
     
     result = await fetch_media_from_link(url)
@@ -205,15 +217,12 @@ async def media_link_handler(client: Client, message: Message):
     total_found = result.get("total_found", len(media_list))
     downloaded_count = 0
     
-    # Processing bulk items loop
     for media in media_list:
         try:
-            # File download/send logic
             downloaded_count += 1
         except Exception:
             pass
 
-    # Partial Download Tracking Message (e.g. 1/10)
     if downloaded_count < total_found:
         await message.reply_text(f"⚠️ **({downloaded_count}/{total_found})** - Partial download completed. Kuch files download nahi ho saki.")
 
@@ -236,5 +245,8 @@ async def send_missing_keys_alert():
 if __name__ == "__main__":
     if missing_keys:
         asyncio.get_event_loop().run_until_complete(send_missing_keys_alert())
-    app.run()
     
+    loop = asyncio.get_event_loop()
+    loop.create_task(start_web_server())
+    app.run()
+        
